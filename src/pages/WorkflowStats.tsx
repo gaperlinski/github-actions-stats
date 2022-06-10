@@ -24,7 +24,8 @@ const conclusionValues = [
     "success" ,
     "failure" ,
     "cancelled" ,
-    "startup_failure"
+    "startup_failure",
+    "skipped"
 ] as const;
 type Conclusions = typeof conclusionValues[number];
 
@@ -32,7 +33,8 @@ const conclusion2colorScheme = {
     "success": "green",
     "failure": "red",
     "cancelled": "yellow",
-    "startup_failure": "facebook"
+    "startup_failure": "facebook",
+    "skipped": "gray"
 }
 const capitalize = s => s && s[0].toUpperCase() + s.slice(1)
 
@@ -42,8 +44,8 @@ type RunDetails = {
     branch: string,
 }
 type RunResults = {
-    duration: number,
-    details: RunDetails,
+    duration: number | null,
+    details: RunDetails | null,
 }
 
 export const WorkflowStats = ({owner, repo, workflowId}: Props) => {
@@ -69,7 +71,8 @@ export const WorkflowStats = ({owner, repo, workflowId}: Props) => {
                         success: 0,
                         failure: 0,
                         cancelled: 0,
-                        startup_failure: 0
+                        startup_failure: 0,
+                        skipped: 0
                     },
                     // list of duration of runs in seconds for each conclusion
                     durations: {
@@ -77,6 +80,7 @@ export const WorkflowStats = ({owner, repo, workflowId}: Props) => {
                         failure: [] as RunResults[],
                         cancelled: [] as RunResults[],
                         startup_failure: [] as RunResults[],
+                        skipped: [] as RunResults[],
                     },
                     earliestRun: new Date(8640000000000000).getTime(),
                     latestRun: new Date(-8640000000000000).getTime()
@@ -92,6 +96,7 @@ export const WorkflowStats = ({owner, repo, workflowId}: Props) => {
                     }
                     const updatedAtTime = Date.parse(run.updated_at)
                     const durationMs = updatedAtTime - createdAtTime
+
                     stats.durations[run.conclusion].push({
                         duration: durationMs / 1000,
                         details: {
@@ -162,6 +167,7 @@ export const WorkflowStats = ({owner, repo, workflowId}: Props) => {
                             <br/>
                             Latest Run: {new Date(workflowRunsStats.latestRun).toLocaleDateString()} <br/>
                             Earliest Run: {new Date(workflowRunsStats.earliestRun).toLocaleDateString()} <br/>
+                            {capitalize(selectedConclusion)} average duration: {(workflowRunsStats.durations[selectedConclusion].map( element => element.duration / 60 ).reduce((a,b) => a + b, 0) / workflowRunsStats.durations[selectedConclusion].length).toFixed(2) || 0} minutes
                         </>
 
 
